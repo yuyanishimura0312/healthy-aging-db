@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>健康寿命DB モニター</title>
+<link rel="icon" href="https://esse-sense.com/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FDFBF9; --fg: #3D2E22; --border: #E6D5C4;
+  --muted: #F8EDE4; --muted-fg: #6B5445; --subtle: #7A6855;
+  --accent: #A86B50; --accent-d: #8B5840; --card: #FFFFFF;
+  --pass: #5A8A5A; --fail: #C25454; --warn: #B8832A;
+  --macro: #C25454; --meso: #B8832A; --micro: #5A8A5A;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--fg); font-family: 'Noto Sans JP','Hiragino Sans',sans-serif; font-size: 14px; line-height: 1.7; }
+header { background: var(--fg); color: var(--bg); padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+header h1 { font-size: 15px; font-weight: 700; letter-spacing: .05em; cursor: pointer; }
+header .sub { font-size: 10px; color: var(--border); margin-top: 2px; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.view-toggle { display: flex; gap: 2px; background: rgba(255,255,255,.1); border-radius: 6px; padding: 2px; }
+.view-btn { background: none; border: none; color: var(--border); padding: 5px 14px; font-size: 11px; font-family: inherit; cursor: pointer; border-radius: 4px; font-weight: 500; }
+.view-btn.active { background: var(--accent); color: white; }
+.refresh-btn { background: var(--accent); color: white; border: none; border-radius: 6px; padding: 6px 16px; font-size: 11px; font-family: inherit; cursor: pointer; font-weight: 500; }
+.refresh-btn:hover { background: var(--accent-d); }
+main { padding: 20px 32px; max-width: 1400px; margin: 0 auto; }
+.view { display: none; }
+.view.active { display: block; }
+
+/* Summary cards */
+.summary-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+.sum-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+.sum-num { font-size: 32px; font-weight: 700; color: var(--accent); line-height: 1; }
+.sum-label { font-size: 11px; color: var(--muted-fg); margin-top: 4px; }
+
+/* Coverage cards */
+.coverage-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+.cov-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; cursor: pointer; transition: border-color .15s; }
+.cov-card:hover { border-color: var(--accent); }
+.cov-card.active { border-color: var(--accent); background: #FDF5F0; }
+.cov-name { font-weight: 700; font-size: 13px; }
+.cov-bar { height: 6px; background: var(--muted); border-radius: 3px; margin: 8px 0; overflow: hidden; }
+.cov-fill { height: 100%; border-radius: 3px; transition: width .5s; }
+.cov-fill.high { background: var(--pass); }
+.cov-fill.mid { background: var(--warn); }
+.cov-fill.low { background: var(--fail); }
+.cov-nums { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted-fg); }
+.cov-pct { font-weight: 700; font-size: 18px; }
+.cov-pct.high { color: var(--pass); }
+.cov-pct.mid { color: var(--warn); }
+.cov-pct.low { color: var(--fail); }
+
+/* Two column layout */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.panel { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.panel-title { font-size: 11px; font-weight: 700; letter-spacing: .05em; color: var(--muted-fg); text-transform: uppercase; margin-bottom: 10px; }
+.panel.full { grid-column: 1/-1; }
+
+/* Stat bars */
+.stat-list { list-style: none; }
+.stat-item { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--muted); font-size: 12px; }
+.stat-item:last-child { border-bottom: none; }
+.stat-bar { width: 80px; height: 5px; background: var(--muted); border-radius: 3px; overflow: hidden; }
+.stat-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); }
+.stat-val { font-weight: 700; min-width: 32px; text-align: right; font-size: 13px; }
+
+/* Loop cards */
+.loop-card { background: var(--muted); border-radius: 8px; padding: 12px; margin-bottom: 8px; font-size: 12px; }
+.loop-name { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+.loop-type { display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+.loop-positive { background: #E8F3E8; color: var(--pass); }
+.loop-negative { background: #FAE8E8; color: var(--fail); }
+.loop-desc { color: var(--muted-fg); margin-top: 4px; line-height: 1.5; }
+
+/* Transition cards */
+.trans-card { background: var(--muted); border-radius: 8px; padding: 12px; margin-bottom: 8px; font-size: 12px; }
+.trans-name { font-weight: 700; font-size: 13px; }
+.trans-rev { display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; margin-left: 6px; }
+.trans-reversible { background: #E8F3E8; color: var(--pass); }
+.trans-partial { background: #FEF3E0; color: var(--warn); }
+.trans-stat { color: var(--accent); font-weight: 600; margin-top: 4px; }
+
+/* Column fill table */
+.col-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.col-table th { text-align: left; padding: 4px 8px; font-size: 10px; font-weight: 700; color: var(--muted-fg); border-bottom: 1px solid var(--border); }
+.col-table td { padding: 4px 8px; border-bottom: 1px solid var(--muted); }
+.fill-bar { height: 5px; background: var(--muted); border-radius: 3px; overflow: hidden; width: 100px; display: inline-block; }
+.fill-inner { height: 100%; border-radius: 3px; }
+.fi-high { background: var(--pass); } .fi-mid { background: var(--warn); } .fi-low { background: var(--fail); }
+.fill-num { font-weight: 600; font-size: 11px; }
+.fill-num.high { color: var(--pass); } .fill-num.mid { color: var(--warn); } .fill-num.low { color: var(--fail); }
+
+/* Framework timeline */
+.fw-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--muted); font-size: 12px; }
+.fw-year { font-weight: 700; color: var(--accent); min-width: 40px; }
+.fw-name { font-weight: 600; }
+.fw-orig { color: var(--muted-fg); font-size: 11px; }
+
+/* Connected nodes */
+.conn-item { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--muted); font-size: 12px; cursor: pointer; }
+.conn-item:hover { background: #FDF5F0; }
+.conn-name { font-weight: 600; }
+.conn-layer { font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 700; }
+.conn-macro { background: rgba(194,84,84,.15); color: var(--macro); }
+.conn-meso { background: rgba(184,131,42,.15); color: var(--meso); }
+.conn-micro { background: rgba(90,138,90,.15); color: var(--micro); }
+.conn-count { font-weight: 700; color: var(--accent); font-size: 14px; }
+
+/* Records view */
+.records-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.records-toolbar select, .records-toolbar input { font-family: inherit; font-size: 12px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--fg); }
+.records-toolbar input[type="search"] { min-width: 220px; }
+.result-count { font-size: 11px; color: var(--muted-fg); margin-left: auto; }
+.records-table { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--card); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+.records-table thead th { text-align: left; padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--muted-fg); background: var(--muted); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+.records-table thead th:hover { color: var(--accent); }
+.records-table tbody tr { border-bottom: 1px solid var(--muted); cursor: pointer; transition: background .1s; }
+.records-table tbody tr:hover { background: #FDF5F0; }
+.records-table tbody td { padding: 7px 10px; vertical-align: top; }
+.tag-layer { font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 700; }
+.tag-macro { background: rgba(194,84,84,.15); color: var(--macro); }
+.tag-meso { background: rgba(184,131,42,.15); color: var(--meso); }
+.tag-micro { background: rgba(90,138,90,.15); color: var(--micro); }
+.tag-domain { font-size: 10px; padding: 1px 6px; border-radius: 3px; background: rgba(168,107,80,.1); color: var(--accent); }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 16px; }
+.page-btn { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; font-size: 11px; font-family: inherit; cursor: pointer; }
+.page-btn:hover { border-color: var(--accent); }
+.page-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+.page-btn:disabled { opacity: .4; cursor: default; }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(61,46,34,.5); z-index: 200; overflow-y: auto; padding: 40px 20px; }
+.modal-overlay.open { display: flex; justify-content: center; align-items: flex-start; }
+.modal { background: var(--card); border-radius: 12px; max-width: 800px; width: 100%; box-shadow: 0 12px 40px rgba(61,46,34,.2); }
+.modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; }
+.modal-header h2 { font-size: 18px; font-weight: 700; }
+.modal-header .m-en { font-size: 13px; color: var(--muted-fg); font-weight: 400; }
+.modal-close { background: none; border: none; font-size: 20px; color: var(--muted-fg); cursor: pointer; padding: 4px 8px; }
+.modal-body { padding: 20px 24px; }
+.modal-section { margin-bottom: 20px; }
+.modal-section-title { font-size: 10px; font-weight: 700; color: var(--accent); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--muted); }
+.modal-def { background: var(--muted); border-radius: 8px; padding: 14px 16px; font-size: 13px; line-height: 1.8; }
+.modal-meta-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.modal-meta-label { font-size: 9px; color: var(--muted-fg); font-weight: 700; text-transform: uppercase; }
+.modal-meta-value { font-size: 12px; font-weight: 600; }
+.modal-stat { background: #FEF3E0; border-radius: 6px; padding: 8px 12px; margin-top: 8px; }
+.modal-stat-label { font-size: 10px; color: var(--warn); font-weight: 700; }
+.modal-stat-value { font-size: 14px; font-weight: 700; color: var(--accent); }
+.modal-rel-item { padding: 6px 8px; background: var(--muted); border-radius: 4px; margin-bottom: 4px; font-size: 12px; cursor: pointer; }
+.modal-rel-item:hover { background: #F0DDD0; }
+.modal-arrow { color: var(--muted-fg); margin: 0 4px; }
+.modal-effect { color: var(--accent); font-weight: 600; margin-left: 4px; }
+.rel-tag { font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 700; margin-right: 4px; }
+.rel-protective { background: #E8F3E8; color: var(--pass); }
+.rel-risk { background: #FAE8E8; color: var(--fail); }
+.rel-other { background: var(--muted); color: var(--muted-fg); }
+
+.loading { text-align: center; padding: 32px; color: var(--muted-fg); }
+.loading-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin-right: 8px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Survey tree */
+.tree-list { list-style: none; }
+.tree-l1 { margin-bottom: 6px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.tree-l1-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--muted); cursor: pointer; }
+.tree-l1-head:hover { background: #F0DDD0; }
+.tree-l1-name { font-weight: 700; font-size: 12px; }
+.tree-l1-en { font-size: 10px; color: var(--muted-fg); }
+.tree-l1-right { display: flex; align-items: center; gap: 8px; }
+.tree-count { font-size: 13px; font-weight: 700; color: var(--accent); }
+.tree-count.zero { color: var(--border); }
+.chevron { font-size: 10px; color: var(--muted-fg); transition: transform .2s; }
+.chevron.open { transform: rotate(180deg); }
+.tree-l2-list { list-style: none; display: none; border-top: 1px solid var(--border); }
+.tree-l2-list.open { display: block; }
+.tree-l2-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px 6px 24px; cursor: pointer; font-size: 12px; }
+.tree-l2-head:hover { background: #FAF4EF; }
+.tree-l3-list { list-style: none; display: none; background: #FEFCFA; border-top: 1px solid var(--muted); }
+.tree-l3-list.open { display: block; }
+.tree-l3-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 12px 4px 36px; font-size: 11px; cursor: pointer; }
+.tree-l3-head:hover { background: #F7EFE9; }
+.count-chip { font-size: 11px; font-weight: 700; color: var(--accent); background: #FDF0E8; border-radius: 4px; padding: 1px 7px; }
+.count-chip.zero { color: var(--border); background: var(--muted); }
+
+@media (max-width: 1100px) { .summary-grid { grid-template-columns: repeat(2,1fr); } .two-col { grid-template-columns: 1fr; } .coverage-grid { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { header { padding: 10px 16px; flex-wrap: wrap; gap: 8px; } main { padding: 12px 16px; } .summary-grid { grid-template-columns: 1fr 1fr; } .modal-meta-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <div onclick="switchView('dashboard')" style="cursor:pointer">
+    <h1>健康寿命DB モニター</h1>
+    <div class="sub" id="header-sub">読み込み中...</div>
+  </div>
+  <nav class="header-right">
+    <div class="view-toggle">
+      <button class="view-btn active" id="vb-dash" onclick="switchView('dashboard')">Dashboard</button>
+      <button class="view-btn" id="vb-rec" onclick="switchView('records')">Records</button>
+    </div>
+    <button class="refresh-btn" onclick="location.reload()">更新</button>
+  </nav>
+</header>
+
+<main>
+  <div id="v-dashboard" class="view active">
+    <div id="dash-content"><div class="loading"><span class="loading-spinner"></span>読み込み中...</div></div>
+  </div>
+  <div id="v-records" class="view">
+    <div id="rec-content"></div>
+  </div>
+</main>
+
+<div id="modal-overlay" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<script>
+const DOMAIN_JA = { biological:'生物学的', behavioral:'行動的', psychosocial:'心理社会的', socioeconomic:'社会経済的', environmental:'環境的', healthcare_system:'医療システム' };
+let S = null; // stats cache
+let recState = { layer:'', domain:'', q:'', sort:'name_ja', order:'asc', page:1 };
+
+function switchView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('v-'+v).classList.add('active');
+  document.getElementById('vb-'+(v==='dashboard'?'dash':'rec')).classList.add('active');
+  if (v === 'records') loadRecords();
+}
+
+// ===== Dashboard =====
+async function loadDashboard() {
+  try {
+    const res = await fetch('/api/stats');
+    S = await res.json();
+    renderDashboard();
+    document.getElementById('header-sub').textContent =
+      `${S.total_factors} factors / ${S.total_relations} relations / ${S.total_interventions} interventions`;
+  } catch(e) {
+    document.getElementById('dash-content').innerHTML = `<div class="loading" style="color:var(--fail)">読み込みエラー: ${e.message}</div>`;
+  }
+}
+
+function renderDashboard() {
+  const d = S;
+  let h = '';
+
+  // Summary cards
+  h += `<div class="summary-grid">
+    <div class="sum-card"><div class="sum-num">${d.total_factors}</div><div class="sum-label">Factors</div></div>
+    <div class="sum-card"><div class="sum-num">${d.total_relations}</div><div class="sum-label">Relations (${d.relations_with_effect} with effect size)</div></div>
+    <div class="sum-card"><div class="sum-num">${d.total_interventions}</div><div class="sum-label">Interventions</div></div>
+    <div class="sum-card"><div class="sum-num">${d.total_links}</div><div class="sum-label">Academic DB Links</div></div>
+  </div>`;
+
+  // Coverage cards
+  h += '<div class="coverage-grid">';
+  for (const c of d.coverage) {
+    const cls = c.coverage_pct >= 80 ? 'high' : c.coverage_pct >= 50 ? 'mid' : 'low';
+    h += `<div class="cov-card" onclick="filterByLayer('${c.name_en?.split(' ')[0]?.toLowerCase() || ''}')">
+      <div class="cov-name">${c.name_ja}</div>
+      <div class="cov-bar"><div class="cov-fill ${cls}" style="width:${c.coverage_pct}%"></div></div>
+      <div class="cov-nums"><span>${c.actual_count} / ${c.estimated_unit_count}</span><span class="cov-pct ${cls}">${c.coverage_pct}%</span></div>
+    </div>`;
+  }
+  h += '</div>';
+
+  // Two-column sections
+  h += '<div class="two-col">';
+
+  // Domain distribution
+  h += '<div class="panel"><div class="panel-title">Domain Distribution</div><ul class="stat-list">';
+  const maxDom = Math.max(...d.domains.map(x => x.cnt));
+  for (const dm of d.domains) {
+    h += `<li class="stat-item"><span>${DOMAIN_JA[dm.domain]||dm.domain}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="stat-bar"><div class="stat-bar-fill" style="width:${dm.cnt/maxDom*100}%"></div></div>
+        <span class="stat-val">${dm.cnt}</span>
+      </div></li>`;
+  }
+  h += '</ul></div>';
+
+  // Evidence distribution
+  h += '<div class="panel"><div class="panel-title">Evidence Level Distribution</div><ul class="stat-list">';
+  const evLabels = { meta_analysis:'Meta-analysis', rct:'RCT', cohort:'Cohort', cross_sectional:'Cross-sectional', theoretical:'Theoretical', expert_consensus:'Expert consensus' };
+  const maxEv = Math.max(...d.evidence_dist.map(x => x.cnt), 1);
+  for (const ev of d.evidence_dist) {
+    h += `<li class="stat-item"><span>${evLabels[ev.evidence_level]||ev.evidence_level}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="stat-bar"><div class="stat-bar-fill" style="width:${ev.cnt/maxEv*100}%"></div></div>
+        <span class="stat-val">${ev.cnt}</span>
+      </div></li>`;
+  }
+  h += '</ul></div>';
+
+  // Top connected factors
+  h += '<div class="panel"><div class="panel-title">Most Connected Factors (Top 10)</div>';
+  for (const f of d.top_connected) {
+    const lcls = f.layer === 'macro' ? 'conn-macro' : f.layer === 'meso' ? 'conn-meso' : 'conn-micro';
+    h += `<div class="conn-item" onclick="openFactor('${f.id}')">
+      <div><span class="conn-layer ${lcls}">${f.layer}</span> <span class="conn-name">${f.name_ja}</span></div>
+      <span class="conn-count">${f.connections}</span>
+    </div>`;
+  }
+  h += '</div>';
+
+  // Modifiability
+  h += '<div class="panel"><div class="panel-title">Modifiability</div><ul class="stat-list">';
+  const modLabels = { fully_modifiable:'完全修正可能', partially_modifiable:'部分的修正可能', non_modifiable:'修正不可' };
+  const maxMod = Math.max(...d.modifiability.map(x => x.cnt), 1);
+  for (const m of d.modifiability) {
+    h += `<li class="stat-item"><span>${modLabels[m.modifiability]||m.modifiability}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="stat-bar"><div class="stat-bar-fill" style="width:${m.cnt/maxMod*100}%"></div></div>
+        <span class="stat-val">${m.cnt}</span>
+      </div></li>`;
+  }
+  h += '</ul></div>';
+  h += '</div>'; // end two-col
+
+  // Feedback loops + Transition points
+  h += '<div class="two-col">';
+  h += '<div class="panel"><div class="panel-title">Feedback Loops</div>';
+  for (const l of d.loops) {
+    const tcls = l.loop_type === 'positive' ? 'loop-positive' : 'loop-negative';
+    h += `<div class="loop-card"><div class="loop-name">${l.name_ja} <span class="loop-type ${tcls}">${l.loop_type === 'positive' ? '好循環' : '悪循環'}</span></div>
+      <div class="loop-desc">${l.description || ''}</div></div>`;
+  }
+  h += '</div>';
+
+  h += '<div class="panel"><div class="panel-title">Critical Transition Points</div>';
+  for (const t of d.transitions) {
+    const rcls = t.reversibility === 'reversible' ? 'trans-reversible' : 'trans-partial';
+    const rlabel = t.reversibility === 'reversible' ? '可逆的' : '部分的可逆';
+    h += `<div class="trans-card"><div class="trans-name">${t.name_ja}<span class="trans-rev ${rcls}">${rlabel}</span></div>
+      ${t.key_statistic ? `<div class="trans-stat">${t.key_statistic}</div>` : ''}
+    </div>`;
+  }
+  h += '</div>';
+  h += '</div>';
+
+  // Column fill rates + Frameworks
+  h += '<div class="two-col">';
+  h += '<div class="panel"><div class="panel-title">Factor Column Fill Rates</div><table class="col-table"><thead><tr><th>Column</th><th>Fill Rate</th><th></th></tr></thead><tbody>';
+  for (const c of d.col_fill) {
+    const cls = c.pct >= 70 ? 'fi-high' : c.pct >= 40 ? 'fi-mid' : 'fi-low';
+    const ncls = c.pct >= 70 ? 'high' : c.pct >= 40 ? 'mid' : 'low';
+    h += `<tr><td>${c.column}</td><td><div class="fill-bar"><div class="fill-inner ${cls}" style="width:${c.pct}%"></div></div></td><td><span class="fill-num ${ncls}">${c.pct}%</span></td></tr>`;
+  }
+  h += '</tbody></table></div>';
+
+  h += '<div class="panel"><div class="panel-title">Theoretical Frameworks</div>';
+  for (const f of d.frameworks) {
+    h += `<div class="fw-item"><span class="fw-year">${f.year_proposed||'?'}</span><div><div class="fw-name">${f.name_ja}</div><div class="fw-orig">${f.originator||''} - ${f.name_en||''}</div></div></div>`;
+  }
+  h += '</div>';
+  h += '</div>';
+
+  // Survey frame tree
+  if (d.survey_tree && d.survey_tree.length) {
+    h += '<div class="panel full"><div class="panel-title">Survey Frame (Coverage Targets)</div>';
+    h += buildTree(d.survey_tree);
+    h += '</div>';
+  }
+
+  document.getElementById('dash-content').innerHTML = h;
+}
+
+function buildTree(nodes) {
+  let h = '<ul class="tree-list">';
+  nodes.forEach((n, i) => {
+    const uid = 'tree-' + n.id;
+    const hasChildren = n.children && n.children.length > 0;
+    const covPct = n.estimated_unit_count ? Math.round(n.actual_count / n.estimated_unit_count * 100) : 0;
+    h += `<li class="tree-l1"><div class="tree-l1-head" onclick="toggleNode('${uid}')">
+      <div><div class="tree-l1-name">${n.name_ja}</div><div class="tree-l1-en">${n.name_en||''}</div></div>
+      <div class="tree-l1-right">
+        <span class="tree-count ${n.actual_count?'':'zero'}">${n.actual_count||0}/${n.estimated_unit_count||0}</span>
+        ${hasChildren?`<span class="chevron" id="chev-${uid}">▾</span>`:''}
+      </div></div>`;
+    if (hasChildren) {
+      h += `<ul class="tree-l2-list" id="${uid}">`;
+      n.children.forEach((c, j) => {
+        const uid2 = uid + '-' + j;
+        h += `<li><div class="tree-l2-head" onclick="toggleNode('${uid2}')">
+          <div>${c.name_ja} <span style="font-size:10px;color:var(--muted-fg)">${c.name_en||''}</span></div>
+          <div class="tree-l1-right">
+            <span class="count-chip ${c.actual_count?'':'zero'}">${c.actual_count||0}/${c.estimated_unit_count||0}</span>
+            ${c.children?.length?`<span class="chevron" id="chev-${uid2}">▾</span>`:''}
+          </div></div>`;
+        if (c.children && c.children.length) {
+          h += `<ul class="tree-l3-list" id="${uid2}">`;
+          c.children.forEach(l3 => {
+            h += `<li><div class="tree-l3-head"><div>${l3.name_ja} <span style="color:var(--muted-fg)">${l3.name_en||''}</span></div>
+              <span class="count-chip ${l3.actual_count?'':'zero'}">${l3.actual_count||0}/${l3.estimated_unit_count||0}</span></div></li>`;
+          });
+          h += '</ul>';
+        }
+        h += '</li>';
+      });
+      h += '</ul>';
+    }
+    h += '</li>';
+  });
+  h += '</ul>';
+  return h;
+}
+
+function toggleNode(uid) {
+  const el = document.getElementById(uid);
+  const ch = document.getElementById('chev-' + uid);
+  if (el) el.classList.toggle('open');
+  if (ch) ch.classList.toggle('open');
+}
+
+function filterByLayer(layer) {
+  recState.layer = layer === 'macro' ? 'macro' : layer === 'meso' ? 'meso' : layer === 'micro' ? 'micro' : '';
+  recState.page = 1;
+  switchView('records');
+}
+
+// ===== Records =====
+async function loadRecords() {
+  const s = recState;
+  const params = new URLSearchParams({ layer:s.layer, domain:s.domain, q:s.q, sort:s.sort, order:s.order, page:s.page });
+  document.getElementById('rec-content').innerHTML = '<div class="loading"><span class="loading-spinner"></span>読み込み中...</div>';
+  try {
+    const res = await fetch('/api/factors?' + params);
+    const data = await res.json();
+    renderRecords(data);
+  } catch(e) {
+    document.getElementById('rec-content').innerHTML = `<div class="loading" style="color:var(--fail)">エラー: ${e.message}</div>`;
+  }
+}
+
+function renderRecords(data) {
+  const s = recState;
+  const arrow = col => s.sort===col ? (s.order==='asc'?' ▲':' ▼') : '';
+  let h = `<div class="records-toolbar">
+    <select onchange="recState.layer=this.value;recState.page=1;loadRecords()">
+      <option value="" ${!s.layer?'selected':''}>All Layers</option>
+      <option value="macro" ${s.layer==='macro'?'selected':''}>Macro</option>
+      <option value="meso" ${s.layer==='meso'?'selected':''}>Meso</option>
+      <option value="micro" ${s.layer==='micro'?'selected':''}>Micro</option>
+    </select>
+    <select onchange="recState.domain=this.value;recState.page=1;loadRecords()">
+      <option value="" ${!s.domain?'selected':''}>All Domains</option>
+      ${Object.entries(DOMAIN_JA).map(([k,v])=>`<option value="${k}" ${s.domain===k?'selected':''}>${v}</option>`).join('')}
+    </select>
+    <input type="search" placeholder="名前・定義で検索..." value="${s.q}" oninput="clearTimeout(window._st);window._st=setTimeout(()=>{recState.q=this.value;recState.page=1;loadRecords()},300)">
+    <span class="result-count">${data.total}件</span>
+  </div>`;
+
+  h += `<table class="records-table"><thead><tr>
+    <th onclick="toggleSort('name_ja')">名前${arrow('name_ja')}</th>
+    <th onclick="toggleSort('layer')">Layer${arrow('layer')}</th>
+    <th onclick="toggleSort('domain')">Domain${arrow('domain')}</th>
+    <th>Key Statistic</th>
+    <th onclick="toggleSort('modifiability')">Modif.${arrow('modifiability')}</th>
+    <th onclick="toggleSort('evidence_strength')">Evidence${arrow('evidence_strength')}</th>
+  </tr></thead><tbody>`;
+
+  for (const r of data.records) {
+    const lcls = r.layer==='macro'?'tag-macro':r.layer==='meso'?'tag-meso':'tag-micro';
+    h += `<tr onclick="openFactor('${r.id}')">
+      <td style="font-weight:600">${r.name_ja||''}<br><span style="font-size:10px;color:var(--muted-fg)">${r.name_en||''}</span></td>
+      <td><span class="tag-layer ${lcls}">${r.layer}</span></td>
+      <td><span class="tag-domain">${DOMAIN_JA[r.domain]||r.domain}</span></td>
+      <td style="font-size:11px;color:var(--accent);max-width:200px">${r.key_statistic||''}</td>
+      <td style="font-size:11px">${r.modifiability||''}</td>
+      <td style="font-size:11px">${r.evidence_strength||''}</td>
+    </tr>`;
+  }
+  h += '</tbody></table>';
+
+  if (data.pages > 1) {
+    h += '<div class="pagination">';
+    h += `<button class="page-btn" onclick="recState.page=1;loadRecords()" ${data.page<=1?'disabled':''}>先頭</button>`;
+    h += `<button class="page-btn" onclick="recState.page=${data.page-1};loadRecords()" ${data.page<=1?'disabled':''}>前</button>`;
+    for (let p = Math.max(1,data.page-3); p <= Math.min(data.pages,data.page+3); p++)
+      h += `<button class="page-btn ${p===data.page?'active':''}" onclick="recState.page=${p};loadRecords()">${p}</button>`;
+    h += `<button class="page-btn" onclick="recState.page=${data.page+1};loadRecords()" ${data.page>=data.pages?'disabled':''}>次</button>`;
+    h += `<span style="font-size:11px;color:var(--muted-fg)">${data.page}/${data.pages}</span></div>`;
+  }
+
+  document.getElementById('rec-content').innerHTML = h;
+}
+
+function toggleSort(col) {
+  if (recState.sort===col) recState.order = recState.order==='asc'?'desc':'asc';
+  else { recState.sort=col; recState.order='asc'; }
+  recState.page=1;
+  loadRecords();
+}
+
+// ===== Factor Detail Modal =====
+async function openFactor(id) {
+  try {
+    const res = await fetch('/api/factor/' + encodeURIComponent(id));
+    const data = await res.json();
+    if (data.error) return;
+    renderFactorModal(data);
+  } catch(e) { console.error(e); }
+}
+
+function renderFactorModal(data) {
+  const f = data.factor;
+  const lcls = f.layer==='macro'?'tag-macro':f.layer==='meso'?'tag-meso':'tag-micro';
+
+  let h = `<div class="modal-header"><div>
+    <h2>${f.name_ja||''}</h2><div class="m-en">${f.name_en||''}</div>
+  </div><button class="modal-close" onclick="closeModal()">x</button></div>
+  <div class="modal-body">
+    <div style="margin-bottom:12px"><span class="tag-layer ${lcls}">${f.layer}</span> <span class="tag-domain">${DOMAIN_JA[f.domain]||f.domain}</span></div>
+    ${f.definition?`<div class="modal-def">${f.definition}</div>`:''}
+    ${f.key_statistic?`<div class="modal-stat"><div class="modal-stat-label">Key Statistic</div><div class="modal-stat-value">${f.key_statistic}</div>${f.key_statistic_source?`<div style="font-size:10px;color:var(--muted-fg);margin-top:2px">${f.key_statistic_source}</div>`:''}</div>`:''}
+    <div class="modal-section" style="margin-top:16px">
+      <div class="modal-meta-row">
+        <div><div class="modal-meta-label">Modifiability</div><div class="modal-meta-value">${f.modifiability||'--'}</div></div>
+        <div><div class="modal-meta-label">Time Scale</div><div class="modal-meta-value">${f.time_scale||'--'}</div></div>
+        <div><div class="modal-meta-label">Evidence</div><div class="modal-meta-value">${f.evidence_strength||'--'}</div></div>
+      </div>
+    </div>`;
+
+  if (data.relations.length) {
+    h += '<div class="modal-section"><div class="modal-section-title">Relations</div>';
+    for (const r of data.relations) {
+      const isSource = r.source_factor_id === f.id;
+      const other = isSource ? r.target_name : r.source_name;
+      const otherId = isSource ? r.target_factor_id : r.source_factor_id;
+      const arrow = isSource ? '→' : '←';
+      const rcls = (r.relation_type==='protective'||r.direction==='positive') ? 'rel-protective' : (r.relation_type==='risk'||r.direction==='negative') ? 'rel-risk' : 'rel-other';
+      const effect = r.effect_size_value ? ` ${r.effect_size_type}=${r.effect_size_value}` : '';
+      h += `<div class="modal-rel-item" onclick="openFactor('${otherId}')">
+        <span class="rel-tag ${rcls}">${r.relation_type}</span>
+        ${f.name_ja} <span class="modal-arrow">${arrow}</span> ${other}
+        ${effect?`<span class="modal-effect">${effect}</span>`:''}
+        ${r.evidence_source?`<br><span style="font-size:10px;color:var(--muted-fg)">${r.evidence_source}</span>`:''}
+      </div>`;
+    }
+    h += '</div>';
+  }
+
+  if (data.interventions.length) {
+    h += '<div class="modal-section"><div class="modal-section-title">Interventions</div>';
+    for (const i of data.interventions) {
+      h += `<div class="modal-rel-item"><strong>${i.name_ja}</strong> <span style="font-size:10px;color:var(--muted-fg)">${i.name_en||''}</span>
+        ${i.effect_size_description?`<br><span style="color:var(--accent);font-size:12px">${i.effect_size_description}</span>`:''}
+      </div>`;
+    }
+    h += '</div>';
+  }
+
+  if (data.academic_links.length) {
+    h += '<div class="modal-section"><div class="modal-section-title">Academic DB Links</div>';
+    for (const l of data.academic_links) {
+      h += `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--muted)">
+        <span style="color:var(--accent);font-weight:600">${l.link_type}</span> → ${l.academic_table} / ${l.description||l.academic_id}
+      </div>`;
+    }
+    h += '</div>';
+  }
+
+  h += '</div>';
+  document.getElementById('modal-content').innerHTML = h;
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+
+loadDashboard();
+</script>
+</body>
+</html>
