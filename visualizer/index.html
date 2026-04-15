@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Healthy Aging Factors Network</title>
+<link rel="icon" href="https://esse-sense.com/favicon.ico">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #14141f;
+    --border: #2a2a3a;
+    --text: #e0e0e8;
+    --text-dim: #8888a0;
+    --accent: #6366f1;
+    --macro: #ef4444;
+    --meso: #f59e0b;
+    --micro-bio: #10b981;
+    --micro-behav: #3b82f6;
+    --micro-psycho: #8b5cf6;
+    --protective: #22c55e;
+    --risk: #ef4444;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  #app { display: flex; height: 100vh; }
+
+  /* Sidebar */
+  #sidebar {
+    width: 340px;
+    min-width: 340px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  #sidebar h1 {
+    font-size: 16px;
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .stats-bar {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .stat {
+    background: var(--bg);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .stat .num { font-weight: 700; font-size: 14px; }
+
+  .filter-section {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .filter-section h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .filter-group { display: flex; flex-wrap: wrap; gap: 4px; }
+  .filter-btn {
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .filter-btn.active {
+    border-color: var(--accent);
+    color: var(--text);
+    background: rgba(99, 102, 241, 0.15);
+  }
+  .filter-btn:hover { border-color: var(--accent); }
+
+  /* Detail panel */
+  #detail-panel {
+    padding: 16px;
+    flex: 1;
+    overflow-y: auto;
+  }
+  #detail-panel h2 {
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+  #detail-panel .subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .detail-label { color: var(--text-dim); }
+  .detail-value { font-weight: 500; text-align: right; max-width: 180px; }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .tag-macro { background: rgba(239,68,68,0.2); color: var(--macro); }
+  .tag-meso { background: rgba(245,158,11,0.2); color: var(--meso); }
+  .tag-micro { background: rgba(16,185,129,0.2); color: var(--micro-bio); }
+  .tag-protective { background: rgba(34,197,94,0.2); color: var(--protective); }
+  .tag-risk { background: rgba(239,68,68,0.2); color: var(--risk); }
+
+  .relations-list { margin-top: 12px; }
+  .relations-list h3 {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .relation-item {
+    padding: 6px 8px;
+    background: var(--bg);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .relation-item:hover { background: rgba(99,102,241,0.1); }
+  .relation-arrow { color: var(--text-dim); margin: 0 4px; }
+  .relation-effect { color: var(--accent); font-weight: 600; margin-left: 4px; }
+
+  /* Graph area */
+  #graph-container {
+    flex: 1;
+    position: relative;
+  }
+  #graph-container svg { width: 100%; height: 100%; }
+
+  /* Legend */
+  #legend {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    background: rgba(20,20,31,0.9);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 11px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* Tooltip */
+  #tooltip {
+    position: absolute;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 100;
+    max-width: 280px;
+  }
+
+  /* Search */
+  #search-input {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    margin-bottom: 8px;
+  }
+  #search-input:focus { border-color: var(--accent); }
+  #search-input::placeholder { color: var(--text-dim); }
+
+  /* View mode buttons */
+  .view-modes { display: flex; gap: 4px; margin-bottom: 8px; }
+  .view-btn {
+    flex: 1;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .view-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="sidebar">
+    <h1>Healthy Aging Factors Network</h1>
+
+    <div class="stats-bar">
+      <div class="stat"><span class="num" id="stat-factors">0</span> factors</div>
+      <div class="stat"><span class="num" id="stat-relations">0</span> relations</div>
+      <div class="stat"><span class="num" id="stat-interventions">0</span> interventions</div>
+    </div>
+
+    <div class="filter-section">
+      <input type="text" id="search-input" placeholder="Search factors...">
+
+      <div class="view-modes">
+        <button class="view-btn active" data-view="all">All</button>
+        <button class="view-btn" data-view="macro">Macro</button>
+        <button class="view-btn" data-view="meso">Meso</button>
+        <button class="view-btn" data-view="micro">Micro</button>
+        <button class="view-btn" data-view="loops">Loops</button>
+      </div>
+
+      <h3>Domain Filter</h3>
+      <div class="filter-group" id="domain-filters"></div>
+    </div>
+
+    <div id="detail-panel">
+      <p style="color: var(--text-dim); font-size: 13px; text-align: center; margin-top: 40px;">
+        Click a node to see details
+      </p>
+    </div>
+  </div>
+
+  <div id="graph-container">
+    <div id="tooltip"></div>
+    <div id="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--macro)"></div> Macro (policy/structure)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--meso)"></div> Meso (community)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--micro-bio)"></div> Micro - Biological</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--micro-behav)"></div> Micro - Behavioral</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--micro-psycho)"></div> Micro - Psychosocial</div>
+      <div style="margin-top:6px; border-top: 1px solid var(--border); padding-top: 6px;">
+        <div class="legend-item"><div style="width:20px;height:2px;background:var(--protective)"></div> Protective</div>
+        <div class="legend-item"><div style="width:20px;height:2px;background:var(--risk)"></div> Risk</div>
+        <div class="legend-item"><div style="width:20px;height:2px;background:var(--text-dim);border-top:2px dashed var(--text-dim)"></div> Other</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="data.js"></script>
+<script>
+const COLORS = {
+  macro: '#ef4444',
+  meso: '#f59e0b',
+  micro: {
+    biological: '#10b981',
+    behavioral: '#3b82f6',
+    psychosocial: '#8b5cf6',
+    socioeconomic: '#ec4899',
+    environmental: '#14b8a6',
+    healthcare_system: '#f97316',
+  }
+};
+
+function getNodeColor(f) {
+  if (f.layer === 'macro') return COLORS.macro;
+  if (f.layer === 'meso') return COLORS.meso;
+  return COLORS.micro[f.domain] || '#6366f1';
+}
+
+function getNodeRadius(f) {
+  if (f.layer === 'macro') return 14;
+  if (f.layer === 'meso') return 11;
+  return 8;
+}
+
+function getEdgeColor(r) {
+  if (r.relation_type === 'protective' || r.direction === 'positive') return '#22c55e';
+  if (r.relation_type === 'risk' || r.direction === 'negative') return '#ef4444';
+  return '#555570';
+}
+
+// Build graph data
+const nodes = DB_DATA.factors.map(f => ({
+  ...f,
+  color: getNodeColor(f),
+  radius: getNodeRadius(f),
+}));
+
+const nodeMap = {};
+nodes.forEach(n => nodeMap[n.id] = n);
+
+const links = DB_DATA.relations
+  .filter(r => nodeMap[r.source_factor_id] && nodeMap[r.target_factor_id])
+  .map(r => ({
+    ...r,
+    source: r.source_factor_id,
+    target: r.target_factor_id,
+    color: getEdgeColor(r),
+  }));
+
+// Update stats
+document.getElementById('stat-factors').textContent = DB_DATA.stats.total_factors;
+document.getElementById('stat-relations').textContent = DB_DATA.stats.total_relations;
+document.getElementById('stat-interventions').textContent = DB_DATA.stats.total_interventions;
+
+// Domain filters
+const domains = [...new Set(DB_DATA.factors.map(f => f.domain))];
+const domainLabels = {
+  biological: 'Biological', behavioral: 'Behavioral', psychosocial: 'Psychosocial',
+  socioeconomic: 'Socioeconomic', environmental: 'Environmental', healthcare_system: 'Healthcare'
+};
+const domainFilters = document.getElementById('domain-filters');
+domains.forEach(d => {
+  const btn = document.createElement('button');
+  btn.className = 'filter-btn active';
+  btn.dataset.domain = d;
+  btn.textContent = domainLabels[d] || d;
+  btn.onclick = () => {
+    btn.classList.toggle('active');
+    updateVisibility();
+  };
+  domainFilters.appendChild(btn);
+});
+
+// SVG setup
+const container = document.getElementById('graph-container');
+const width = container.clientWidth;
+const height = container.clientHeight;
+
+const svg = d3.select('#graph-container').append('svg')
+  .attr('width', width)
+  .attr('height', height);
+
+// Arrow markers
+svg.append('defs').selectAll('marker')
+  .data(['protective', 'risk', 'other'])
+  .join('marker')
+  .attr('id', d => `arrow-${d}`)
+  .attr('viewBox', '0 -5 10 10')
+  .attr('refX', 20)
+  .attr('refY', 0)
+  .attr('markerWidth', 6)
+  .attr('markerHeight', 6)
+  .attr('orient', 'auto')
+  .append('path')
+  .attr('fill', d => d === 'protective' ? '#22c55e' : d === 'risk' ? '#ef4444' : '#555570')
+  .attr('d', 'M0,-5L10,0L0,5');
+
+const g = svg.append('g');
+
+// Zoom
+const zoom = d3.zoom()
+  .scaleExtent([0.2, 4])
+  .on('zoom', e => g.attr('transform', e.transform));
+svg.call(zoom);
+
+// Force simulation
+const simulation = d3.forceSimulation(nodes)
+  .force('link', d3.forceLink(links).id(d => d.id).distance(100))
+  .force('charge', d3.forceManyBody().strength(-200))
+  .force('center', d3.forceCenter(width / 2, height / 2))
+  .force('collision', d3.forceCollide().radius(d => d.radius + 4))
+  .force('x', d3.forceX(d => {
+    if (d.layer === 'macro') return width * 0.2;
+    if (d.layer === 'meso') return width * 0.4;
+    return width * 0.65;
+  }).strength(0.08))
+  .force('y', d3.forceY(height / 2).strength(0.03));
+
+// Draw edges
+const link = g.append('g')
+  .selectAll('line')
+  .data(links)
+  .join('line')
+  .attr('stroke', d => d.color)
+  .attr('stroke-width', d => Math.max(1, (d.strength || 5) / 3))
+  .attr('stroke-opacity', 0.4)
+  .attr('marker-end', d => {
+    if (d.direction === 'positive' || d.relation_type === 'protective') return 'url(#arrow-protective)';
+    if (d.direction === 'negative' || d.relation_type === 'risk') return 'url(#arrow-risk)';
+    return 'url(#arrow-other)';
+  });
+
+// Draw nodes
+const node = g.append('g')
+  .selectAll('g')
+  .data(nodes)
+  .join('g')
+  .call(d3.drag()
+    .on('start', dragstarted)
+    .on('drag', dragged)
+    .on('end', dragended));
+
+node.append('circle')
+  .attr('r', d => d.radius)
+  .attr('fill', d => d.color)
+  .attr('fill-opacity', 0.8)
+  .attr('stroke', d => d.color)
+  .attr('stroke-width', 2)
+  .attr('stroke-opacity', 0.3);
+
+// Labels
+node.append('text')
+  .text(d => d.name_ja)
+  .attr('x', d => d.radius + 4)
+  .attr('y', 4)
+  .attr('font-size', d => d.layer === 'macro' ? 11 : d.layer === 'meso' ? 10 : 9)
+  .attr('fill', d => d.color)
+  .attr('fill-opacity', 0.9)
+  .style('pointer-events', 'none');
+
+// Tooltip
+const tooltip = document.getElementById('tooltip');
+node.on('mouseover', (e, d) => {
+    tooltip.style.opacity = 1;
+    tooltip.innerHTML = `<strong>${d.name_ja}</strong><br>
+      <span style="color:var(--text-dim)">${d.name_en || ''}</span><br>
+      ${d.key_statistic ? `<span style="color:var(--accent)">${d.key_statistic}</span>` : ''}`;
+  })
+  .on('mousemove', e => {
+    tooltip.style.left = (e.pageX + 12) + 'px';
+    tooltip.style.top = (e.pageY - 12) + 'px';
+  })
+  .on('mouseout', () => tooltip.style.opacity = 0);
+
+// Click handler
+node.on('click', (e, d) => showDetail(d));
+
+function showDetail(d) {
+  const panel = document.getElementById('detail-panel');
+  const incoming = links.filter(l => (l.target.id || l.target) === d.id);
+  const outgoing = links.filter(l => (l.source.id || l.source) === d.id);
+
+  // Find interventions targeting this factor
+  const interventions = DB_DATA.interventions.filter(i =>
+    i.target_factor_ids && i.target_factor_ids.includes(d.id)
+  );
+
+  let html = `
+    <h2>${d.name_ja}</h2>
+    <div class="subtitle">${d.name_en || ''}</div>
+    <div style="margin-bottom:12px">
+      <span class="tag tag-${d.layer}">${d.layer.toUpperCase()}</span>
+      <span class="tag" style="background:rgba(99,102,241,0.15);color:var(--accent)">${domainLabels[d.domain] || d.domain}</span>
+    </div>
+    ${d.definition ? `<p style="font-size:13px;margin-bottom:12px;color:var(--text-dim)">${d.definition}</p>` : ''}
+    <div class="detail-row"><span class="detail-label">Modifiability</span><span class="detail-value">${d.modifiability || '-'}</span></div>
+    <div class="detail-row"><span class="detail-label">Time Scale</span><span class="detail-value">${d.time_scale || '-'}</span></div>
+    <div class="detail-row"><span class="detail-label">Evidence</span><span class="detail-value">${d.evidence_strength || '-'}</span></div>
+    ${d.key_statistic ? `<div class="detail-row"><span class="detail-label">Key Stat</span><span class="detail-value" style="color:var(--accent)">${d.key_statistic}</span></div>` : ''}
+    ${d.key_statistic_source ? `<div class="detail-row"><span class="detail-label">Source</span><span class="detail-value">${d.key_statistic_source}</span></div>` : ''}
+  `;
+
+  if (incoming.length > 0) {
+    html += `<div class="relations-list"><h3>Incoming Relations (${incoming.length})</h3>`;
+    incoming.forEach(r => {
+      const src = nodeMap[r.source.id || r.source];
+      const effectStr = r.effect_size_value ? ` ${r.effect_size_type}=${r.effect_size_value}` : '';
+      html += `<div class="relation-item" onclick="focusNode('${src.id}')">
+        <span class="tag tag-${r.relation_type === 'protective' || r.direction === 'positive' ? 'protective' : 'risk'}">${r.relation_type}</span>
+        ${src.name_ja} <span class="relation-arrow">&rarr;</span> ${d.name_ja}
+        ${effectStr ? `<span class="relation-effect">${effectStr}</span>` : ''}
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  if (outgoing.length > 0) {
+    html += `<div class="relations-list"><h3>Outgoing Relations (${outgoing.length})</h3>`;
+    outgoing.forEach(r => {
+      const tgt = nodeMap[r.target.id || r.target];
+      const effectStr = r.effect_size_value ? ` ${r.effect_size_type}=${r.effect_size_value}` : '';
+      html += `<div class="relation-item" onclick="focusNode('${tgt.id}')">
+        <span class="tag tag-${r.relation_type === 'protective' || r.direction === 'positive' ? 'protective' : 'risk'}">${r.relation_type}</span>
+        ${d.name_ja} <span class="relation-arrow">&rarr;</span> ${tgt.name_ja}
+        ${effectStr ? `<span class="relation-effect">${effectStr}</span>` : ''}
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  if (interventions.length > 0) {
+    html += `<div class="relations-list"><h3>Interventions (${interventions.length})</h3>`;
+    interventions.forEach(i => {
+      html += `<div class="relation-item">
+        <strong>${i.name_ja}</strong><br>
+        <span style="color:var(--text-dim)">${i.effect_size_description || ''}</span>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  panel.innerHTML = html;
+
+  // Highlight connected nodes
+  const connectedIds = new Set([d.id]);
+  incoming.forEach(r => connectedIds.add(r.source.id || r.source));
+  outgoing.forEach(r => connectedIds.add(r.target.id || r.target));
+
+  node.selectAll('circle')
+    .attr('fill-opacity', n => connectedIds.has(n.id) ? 1 : 0.15)
+    .attr('stroke-opacity', n => connectedIds.has(n.id) ? 0.8 : 0.05);
+  node.selectAll('text')
+    .attr('fill-opacity', n => connectedIds.has(n.id) ? 1 : 0.15);
+  link.attr('stroke-opacity', l =>
+    connectedIds.has(l.source.id || l.source) && connectedIds.has(l.target.id || l.target) ? 0.7 : 0.05
+  );
+}
+
+function focusNode(id) {
+  const n = nodes.find(n => n.id === id);
+  if (n) showDetail(n);
+}
+
+// Reset highlight on background click
+svg.on('click', e => {
+  if (e.target === svg.node()) {
+    node.selectAll('circle').attr('fill-opacity', 0.8).attr('stroke-opacity', 0.3);
+    node.selectAll('text').attr('fill-opacity', 0.9);
+    link.attr('stroke-opacity', 0.4);
+  }
+});
+
+// Search
+document.getElementById('search-input').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase();
+  if (!q) {
+    node.style('display', null);
+    link.style('display', null);
+    return;
+  }
+  node.style('display', d =>
+    (d.name_ja && d.name_ja.includes(q)) ||
+    (d.name_en && d.name_en.toLowerCase().includes(q)) ||
+    (d.keywords_ja && d.keywords_ja.includes(q)) ? null : 'none'
+  );
+});
+
+// View mode
+document.querySelectorAll('.view-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    updateVisibility();
+  };
+});
+
+function updateVisibility() {
+  const view = document.querySelector('.view-btn.active').dataset.view;
+  const activeDomains = [...document.querySelectorAll('#domain-filters .filter-btn.active')]
+    .map(b => b.dataset.domain);
+
+  node.style('display', d => {
+    if (view !== 'all' && view !== 'loops' && d.layer !== view) return 'none';
+    if (!activeDomains.includes(d.domain)) return 'none';
+    return null;
+  });
+
+  link.style('display', l => {
+    const src = l.source.id ? l.source : nodeMap[l.source];
+    const tgt = l.target.id ? l.target : nodeMap[l.target];
+    if (!src || !tgt) return 'none';
+    if (view === 'loops' && !l.feedback_loop_id) return 'none';
+    return null;
+  });
+}
+
+// Tick
+simulation.on('tick', () => {
+  link
+    .attr('x1', d => d.source.x)
+    .attr('y1', d => d.source.y)
+    .attr('x2', d => d.target.x)
+    .attr('y2', d => d.target.y);
+  node.attr('transform', d => `translate(${d.x},${d.y})`);
+});
+
+function dragstarted(e) {
+  if (!e.active) simulation.alphaTarget(0.3).restart();
+  e.subject.fx = e.subject.x;
+  e.subject.fy = e.subject.y;
+}
+function dragged(e) {
+  e.subject.fx = e.x;
+  e.subject.fy = e.y;
+}
+function dragended(e) {
+  if (!e.active) simulation.alphaTarget(0);
+  e.subject.fx = null;
+  e.subject.fy = null;
+}
+
+// Initial zoom to fit
+setTimeout(() => {
+  svg.call(zoom.transform, d3.zoomIdentity.translate(50, 0).scale(0.85));
+}, 1500);
+</script>
+</body>
+</html>
