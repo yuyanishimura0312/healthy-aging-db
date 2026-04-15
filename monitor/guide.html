@@ -99,6 +99,8 @@ html { scroll-behavior: smooth; }
       <li><a href="#details">2. 詳しい使い方</a></li>
       <li><a href="#tips">3. Tips / コツ</a></li>
       <li><a href="#background">4. データベースの背景</a></li>
+      <li><a href="#schema">5. データベース構造の詳細</a></li>
+      <li><a href="#reading">6. データの読み方</a></li>
     </ul>
   </nav>
 
@@ -202,13 +204,102 @@ html { scroll-behavior: smooth; }
     <div class="prose">
 
       <h3>このデータベースが扱うもの</h3>
-      <p>健康寿命延伸要因データベースは、人が健康に長く暮らし続けるために何が重要か、という問いに対する科学的知見を体系的に構造化したデータベースです。要因（Factor）・関係（Relation）・介入（Intervention）という3つの構成要素で整理しています。</p>
+      <p>健康寿命延伸要因データベースは、「人が健康に長く暮らし続けるために何が重要か」という問いに対する科学的知見を、体系的に構造化したデータベースです。「身体活動が多いと死亡リスクが下がる」「社会的孤立がうつや認知症のリスクを高める」「教育年数が長いほど全死因死亡率が低い」といった、世界中の疫学研究やメタ分析から得られた知見を、要因（Factor）・関係（Relation）・介入（Intervention）という3つの構成要素で整理しています。</p>
+      <p>単に知見を羅列するのではなく、要因同士がどう影響し合うかの因果ネットワークとして記録しているため、「ある要因の上流・下流には何があるか」「どこに介入すればシステム全体が良い方向に動くか」といったシステム思考的な分析が可能です。このアプローチは、Nature Aging（2022年）やJournals of Gerontology（2024年）で提唱された「複雑適応系としての老化」という研究潮流に基づいています。</p>
 
-      <h3>三層モデル</h3>
-      <p>マクロ層は教育政策・所得格差・医療制度など社会の構造的要因。メゾ層はウォーカビリティ・社会関係資本・通いの場など地域レベルの要因。ミクロ層はテロメア長・身体活動・生きがいなど個人レベルの要因。</p>
+      <h3>マクロ・メゾ・ミクロの三層モデル</h3>
+      <p>このデータベースの根幹にある概念は、健康寿命に影響する要因を3つの層に分類する三層モデルです。この分類はWHOの社会的健康決定要因（SDoH）フレームワークやSDoHO（Social Determinants of Health Ontology）と整合しており、国際的に標準的なアプローチです。</p>
+      <p><strong>マクロ層</strong>は、個人の力では直接変えられない社会の構造的条件を含みます。教育政策、所得格差、医療制度、たばこ・アルコール規制、気候変動対策、ジェンダー平等政策など、国レベルの制度・政策が該当します。Whitehall II研究（英国、1985年開始）が示したように、職位が最も低いグループの冠動脈疾患死亡率は最上位グループの3.6倍に達するという事実は、マクロ層の構造的規定力の大きさを端的に示しています。</p>
+      <p><strong>メゾ層</strong>は、地域・コミュニティレベルの要因です。ウォーカビリティ（歩きやすさ）、社会関係資本、「通いの場」のような地域拠点、医療資源の地域格差、住宅の質、地域の食環境、公共交通へのアクセスなどが含まれます。マクロ層の構造的条件を、個人が実際に行動できる機会として翻訳する中間層として機能します。JAGESの研究では、「運動やウォーキングに適した公園や歩道がある」と認知している住民の健康寿命が有意に長いことが示されており、メゾ層の環境整備が個人行動を構造的に促進する効果が実証されています。</p>
+      <p><strong>ミクロ層</strong>は個人レベルの要因であり、最も多様で数が多い層です。テロメア長や慢性炎症（インフラメイジング）といった生物学的要因、身体活動や食事などの行動的要因、生きがいや社会的孤立といった心理社会的要因まで、幅広い領域をカバーしています。ミクロ層の要因は最も直接的に健康状態に影響しますが、その行動や心理状態自体がメゾ・マクロ層によって大きく規定されている点が重要です。個人の「選択」として語られがちな健康行動が、実際には社会構造に深く埋め込まれていることを、ブルデューのハビトゥス概念が理論的に裏付けています。</p>
 
-      <h3>v3学術知識DBとの接続</h3>
-      <p>Academic DB Linksテーブルを通じてv3学術知識データベースとリンクしています。各要因や関係がどのような理論的裏づけを持つかを確認できます。</p>
+      <h3>要因・関係・介入の接続構造</h3>
+      <p>データベースの3つの中核テーブルは相互に接続されています。「要因（factors）」は健康寿命に影響しうるすべての因子であり、各要因には修正可能性（変えられるかどうか）、時間尺度（急性・慢性・ライフコース）、エビデンス強度（メタ分析からエキスパートコンセンサスまで）が記録されています。「関係（factor_relations）」は要因間の因果や相関を記述し、方向性（正・負・複合）、効果量（HR、ORなどの定量的指標）、エビデンスの出典を持ちます。「介入（interventions）」はエビデンスに基づく具体的な介入プログラムや政策であり、対象とする要因と紐付けられています。</p>
+      <p>加えて、フィードバックループ（好循環・悪循環の構造）やクリティカル・トランジションポイント（健康状態が大きく変わる転換点）もデータベースに定義されています。たとえば「社会的孤立→孤独感→抑うつ→身体活動低下→筋力/認知低下→社会参加困難→さらなる孤立」という悪循環は、24カ国にわたる縦断研究で確認されている負のフィードバックループです。こうした循環構造を明示的に記録することで、悪循環を断ち切るレバレッジポイント（てこの支点）を特定できるようになります。</p>
+
+      <h3>v3学術知識データベースとの接続</h3>
+      <p>このデータベースは、別途構築しているv3学術知識データベース（academic.db）と接続テーブル（academic_db_links）を通じてリンクしています。v3学術知識DBは、人文学・社会科学・自然科学・工学・芸術の5分野にわたる4,700件以上の学術的な理論・概念・発見を体系化したものです。たとえば、「自己効力感と健康行動」の関係は社会科学の「健康信念モデル（HBM）」理論に基づいており、「テロメア長」は自然科学の「テロメアとテロメラーゼ」という発見に由来しています。「通いの場」は人文学の「実践コミュニティ」概念と接続し、健康格差の構造はブルデューの「ハビトゥス」やフーコーの「生政治」といった人文学的概念に理論的基盤を持ちます。このような学術的基盤との接続により、データベースの各要因や関係が、どのような知的伝統に位置づけられるのかを確認できる仕組みになっています。</p>
+
+      <h3>理論的枠組み</h3>
+      <p>このデータベースの設計は、複数の学術的枠組みに基づいています。Rowe &amp; Kahn（1997年）の「成功的老化モデル」は、老化を積極的に形成可能なプロセスとして捉える視座を提供しました。WHOの「健康な高齢化」枠組み（2015年）は、「内在的能力」（認知・心理・運動・活力・感覚の5領域）と「機能的能力」（内在的能力×環境）の二層概念を導入し、本データベースのミクロ層の分類基盤となっています。López-Otínらの「老化の12のホールマーク」（2023年改訂版）は、生物学的要因の体系的分類を提供しています。GBD（世界疾病負担研究）の88リスク因子分類は、要因の階層構造と修正可能性の設計に影響を与えています。</p>
+
+    </div>
+  </section>
+
+  <!-- Section 5: データベース構造の詳細 -->
+  <section class="guide-section" id="schema">
+    <div class="section-title">データベース構造の詳細</div>
+    <div class="prose">
+
+      <h3>12のテーブル構成</h3>
+      <p>データベースはSQLite形式で構築されており、12のテーブルで構成されています。v3学術知識データベースと同じ設計パターン（日英バイリンガルの名称管理、UUID主キー、source_reliability、data_completeness等）を踏襲しつつ、健康寿命研究に固有の要件（効果量の格納、エビデンス階層、三層分類、フィードバックループ表現）を独自に拡張した設計です。</p>
+
+      <table style="width:100%;border-collapse:collapse;font-size:12px;margin:16px 0;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+        <thead><tr style="background:var(--muted);">
+          <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--muted-fg);border-bottom:1px solid var(--border);">テーブル名</th>
+          <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--muted-fg);border-bottom:1px solid var(--border);">役割</th>
+          <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--muted-fg);border-bottom:1px solid var(--border);">主な内容</th>
+        </tr></thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--muted);"><td style="padding:6px 12px;font-weight:600;">factors</td><td style="padding:6px 12px;">要因（中心テーブル）</td><td style="padding:6px 12px;">名前、層、ドメイン、定義、修正可能性、時間尺度、エビデンス強度、主要統計量</td></tr>
+          <tr style="border-bottom:1px solid var(--muted);"><td style="padding:6px 12px;font-weight:600;">factor_relations</td><td style="padding:6px 12px;">要因間の関係</td><td style="padding:6px 12px;">因果関係の種類、方向、効果量（HR/OR等）、エビデンスレベル、出典</td></tr>
+          <tr style="border-bottom:1px solid var(--muted);"><td style="padding:6px 12px;font-weight:600;">interventions</td><td style="padding:6px 12px;">介入プログラム</td><td style="padding:6px 12px;">介入名、種類、対象集団、効果、費用対効果、実施国</td></tr>
+          <tr style="border-bottom:1px solid var(--muted);"><td style="padding:6px 12px;font-weight:600;">intervention_targets</td><td style="padding:6px 12px;">介入と要因の紐付け</td><td style="padding:6px 12px;">どの介入がどの要因を標的とするか</td></tr>
+          <tr style="border-bottom:1px solid var(--muted);"><td style="padding:6px 12px;font-weight:600;">evidence</td><td style="padding:6px 12px;">個別の研究</td><td style="padding:6px 12px;">論文タイトル、著者、ジャーナル、研究タイプ、サンプルサイズ、主要知見</td></tr>
+          <tr style="border-bottom:1px solid var(--muted);"><td style="padding:6px 12px;font-weight:600;">transition_points</td><td style="padding:6px 12px;">転換点</td><td style="padding:6px 12px;">プレフレイル→フレイル移行、退職、配偶者喪失、多疾患罹患の4つ</td></tr>
+          <tr style="border-bottom:1px solid var(--muted);"><td style="padding:6px 12px;font-weight:600;">feedback_loops</td><td style="padding:6px 12px;">フィードバックループ</td><td style="padding:6px 12px;">好循環（正）と悪循環（負）の構造、レバレッジポイント</td></tr>
+          <tr style="border-bottom:1px solid var(--muted);"><td style="padding:6px 12px;font-weight:600;">measurement_indicators</td><td style="padding:6px 12px;">測定指標</td><td style="padding:6px 12px;">HALE、DFLE、日本の健康寿命、要介護認定、エピジェネティック時計等</td></tr>
+          <tr style="border-bottom:1px solid var(--muted);"><td style="padding:6px 12px;font-weight:600;">theoretical_frameworks</td><td style="padding:6px 12px;">理論的枠組み</td><td style="padding:6px 12px;">成功的老化モデル、SOCモデル、WHO枠組み、老化のホールマーク等</td></tr>
+          <tr style="border-bottom:1px solid var(--muted);"><td style="padding:6px 12px;font-weight:600;">framework_factor_links</td><td style="padding:6px 12px;">理論と要因の紐付け</td><td style="padding:6px 12px;">どの理論がどの要因に適用されるか</td></tr>
+          <tr style="border-bottom:1px solid var(--muted);"><td style="padding:6px 12px;font-weight:600;">academic_db_links</td><td style="padding:6px 12px;">v3学術知識DBへの参照</td><td style="padding:6px 12px;">social_theory、humanities_concept、natural_discovery等との接続</td></tr>
+          <tr><td style="padding:6px 12px;font-weight:600;">survey_frame</td><td style="padding:6px 12px;">調査フレーム</td><td style="padding:6px 12px;">収集目標の階層構造とカバレッジ率の管理</td></tr>
+        </tbody>
+      </table>
+
+      <h3>要因（factors）テーブルの分類軸</h3>
+      <p>各要因は5つの分類軸で整理されています。</p>
+      <p><strong>層（layer）</strong>はマクロ・メゾ・ミクロの三値です。この分類により、ある健康課題が「個人の努力の問題」なのか「社会構造の問題」なのかを明確にできます。</p>
+      <p><strong>ドメイン（domain）</strong>は要因の学問的領域を示し、生物学的（biological）、行動的（behavioral）、心理社会的（psychosocial）、社会経済的（socioeconomic）、環境的（environmental）、医療システム（healthcare_system）の6つに分類されています。この分類はGBDのリスク因子分類とWHOのICFを参考に設計されています。</p>
+      <p><strong>修正可能性（modifiability）</strong>は、その要因が介入によって変えられるかどうかを3段階で示します。「完全修正可能（fully_modifiable）」は運動や食事のように直接働きかけられるもの、「部分的修正可能（partially_modifiable）」はテロメア長のように行動で遅延できるが完全には制御できないもの、「修正不可（non_modifiable）」は遺伝的素因のように変えられないものです。この属性は、限られたリソースでどの要因に介入すべきかを判断する際の重要な指標です。</p>
+      <p><strong>時間尺度（time_scale）</strong>は、要因の変化が生じるスピードを示します。「急性（acute）」は数日から数週間、「慢性（chronic）」は数カ月から数年、「ライフコース（lifecourse）」は数十年にわたる蓄積的な影響を意味します。幼少期の社会経済的不利が高齢期の健康に影響するのは、ライフコース的な要因の典型例です。</p>
+      <p><strong>エビデンス強度（evidence_strength）</strong>は、その要因の健康寿命への影響を支持する証拠のレベルを示します。メタ分析が最高レベル、次いでRCT、コホート研究、横断研究、理論的根拠、専門家合意の順に位置づけられています。これはオックスフォード・エビデンスレベルやGRADE基準に準拠した階層です。</p>
+
+      <h3>関係（factor_relations）テーブルの構造</h3>
+      <p>因果関係テーブルは、2つの要因間の関係を方向付きで記録します。関係の種類（relation_type）には「因果（causal）」「関連（associative）」「媒介（mediating）」「調整（moderating）」「双方向（bidirectional）」「保護（protective）」「リスク（risk）」「促進（enabling）」「阻害（inhibiting）」の9種類があります。</p>
+      <p>特に重要なのは効果量の格納です。effect_size_typeにはHR（ハザード比）、OR（オッズ比）、RR（相対リスク）、パーセンテージなどが記録され、effect_size_valueには具体的な数値が入ります。たとえば「社会参加（3+団体）→機能障害」の関係にはHR=0.57が記録されており、3つ以上の団体に参加する高齢者は機能障害リスクが43%低いことを示しています。</p>
+      <p>また、各関係にはフィードバックループID（feedback_loop_id）を付与できます。これにより、個々の二者間関係だけでなく、複数の関係が形成する循環構造をシステムとして把握できます。</p>
+
+      <h3>カバレッジ管理（survey_frame）</h3>
+      <p>survey_frameテーブルは、v3学術知識データベースで確立された「カバレッジ率による品質管理」のパターンを踏襲しています。各分野ごとに推定される要因の総数（estimated_unit_count）を事前に設定し、実際に登録された数（actual_count）との比率をカバレッジ率として管理します。この仕組みにより、「どの領域のデータが不足しているか」「次にどこを優先的に調査すべきか」を定量的に判断できます。単にレコード数を追うのではなく、分野ごとの網羅率を管理することで、特定分野への偏りを防ぐ効果があります。</p>
+
+    </div>
+  </section>
+
+  <!-- Section 6: データの読み方 -->
+  <section class="guide-section" id="reading">
+    <div class="section-title">データの読み方</div>
+    <div class="prose">
+
+      <h3>効果量の読み方</h3>
+      <p>データベースに記録された効果量は、関係の「強さ」を定量的に示す数値です。主に以下の4種類が使われています。</p>
+      <p><strong>HR（ハザード比 / Hazard Ratio）</strong>は、ある要因を持つグループの健康イベント（死亡、障害など）の発生速度を、持たないグループと比較した比率です。HR=1.0は差なし、1.0未満は保護的（リスク低下）、1.0超はリスク増大を意味します。たとえばHR=0.57は「リスクが43%低い」ことを示します。値が1.0から離れるほど効果が大きいと解釈できます。</p>
+      <p><strong>OR（オッズ比 / Odds Ratio）</strong>は、ある要因を持つグループでイベントが起こるオッズと、持たないグループのオッズの比率です。解釈の方向はHRと同じで、1.0が基準、1.0未満が保護的、1.0超がリスク増大です。社会的孤立のOR=1.29は「孤立している人は、していない人に比べて死亡のオッズが29%高い」ことを意味します。</p>
+      <p><strong>パーセンテージ</strong>は、「○○%の低下」「○○%の増加」という形でリスクの変化を直接示します。たとえば「身体活動（4000歩/日 vs 2000歩）→全死因死亡リスク36%低下」という記録は、1日4000歩歩く人は2000歩の人に比べて死亡リスクが36%低いことを意味します。</p>
+      <p><strong>倍率</strong>は、グループ間の比率をそのまま示したものです。Whitehall II研究の「職位最低群の冠動脈疾患死亡率は最高群の3.6倍」がその例です。</p>
+
+      <h3>エビデンスレベルの階層</h3>
+      <p>すべての関係にはエビデンスレベルが記録されており、その情報の信頼性を判断する材料になります。最も信頼性が高いのは<strong>メタ分析（meta_analysis）</strong>で、複数の研究を統計的に統合した結果です。Holt-Lunstadの社会的関係と死亡リスクのメタ分析（148研究、30.8万人）はその代表例です。次に<strong>RCT（ランダム化比較試験）</strong>は、参加者をランダムに介入群と対照群に分けて効果を検証した研究で、FINGER試験がその例です。<strong>コホート研究（cohort）</strong>は特定の集団を長期間追跡して因果関係を調べる観察研究で、JAGES（日本老年学的評価研究）の知見はこれに該当します。<strong>横断研究（cross_sectional）</strong>はある一時点でのデータから関連を調べるもので、因果の方向は確定できません。<strong>理論的根拠（theoretical）</strong>と<strong>専門家合意（expert_consensus）</strong>は直接的な実証データではなく、学術的な推論に基づくものです。</p>
+
+      <h3>修正可能性と介入の関係</h3>
+      <p>データベースの最も実用的な活用法は、「修正可能で、かつエビデンスの強い要因」を特定し、それに対応する介入を見つけることです。Records画面でModifiability列を「fully_modifiable」でフィルタリングし、Evidence列でソートすると、最もエビデンスが強い修正可能要因が上位に表示されます。そこから詳細モーダルを開けば、対応する介入プログラムとその効果量を確認できます。</p>
+      <p>たとえば「社会参加」は完全修正可能であり、メタ分析・コホート研究の両方で強いエビデンスがあります。対応する介入として「通いの場」（女性+1.2年、男性+0.5年の健康寿命延伸）や「ソーシャル・プリスクライビング」（GP受診53%減）が紐付いており、政策的にどのような手段が取りうるかまで一気通貫で確認できます。</p>
+
+      <h3>フィードバックループの読み方</h3>
+      <p>Dashboardの「Feedback Loops」パネルに表示されるループは、健康寿命のシステムにおいて要因同士が循環的に影響し合う構造を示しています。「負のループ（悪循環）」は一度始まると自己強化的に悪化する構造であり、早期に断ち切ることが重要です。「正のループ（好循環）」は一度起動すると自己強化的に改善が進む構造であり、この循環を始動させるきっかけ（介入）を見つけることが鍵です。</p>
+      <p>各ループには「レバレッジポイント」が記録されています。これはシステム思考の概念で、「小さな介入で大きな効果が得られる点」を意味します。たとえば「孤立-うつ-不活動ループ」のレバレッジポイントは「通いの場」や「ソーシャル・プリスクライビング」であり、これらの介入がループの構造自体を変えることで悪循環を断ち切れる可能性があります。</p>
+
+      <h3>転換点の読み方</h3>
+      <p>「Critical Transition Points」は、健康状態が大きく変わりうる時期を示しています。最も重要なのは「プレフレイル→フレイル移行」です。26カ国・5万人超のメタ分析によれば、プレフレイル状態の高齢者の23%は3年以内にロバスト（健康）に回復しており、この段階は「可逆的」です。つまり、フレイルに至る前のこの時期に適切な介入を行えば、回復の可能性が最も高いということを意味します。フレイルが確定した後では回復率が大幅に低下するため、プレフレイル段階での早期発見と多面的介入がデータベースの知見が最も強く推奨する戦略です。</p>
 
     </div>
   </section>
