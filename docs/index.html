@@ -234,6 +234,8 @@ main { padding: 20px 32px; max-width: 1400px; margin: 0 auto; }
 
 <script>
 const DOMAIN_JA = { biological:'生物学的', behavioral:'行動的', psychosocial:'心理社会的', socioeconomic:'社会経済的', environmental:'環境的', healthcare_system:'医療システム' };
+// HTML escape to prevent XSS
+function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
 let S = null; // stats cache
 let recState = { layer:'', domain:'', q:'', sort:'name_ja', order:'asc', page:1 };
 
@@ -472,7 +474,11 @@ async function loadRecords() {
       const vb = (b[col] || '').toString().toLowerCase();
       return s.order === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
     });
-    renderRecords({ records, total: records.length, page: 1, pages: 1, subdomains: allFactors.subdomains });
+    const perPage = 30;
+    const page = s.page || 1;
+    const pages = Math.max(1, Math.ceil(records.length / perPage));
+    const paged = records.slice((page - 1) * perPage, page * perPage);
+    renderRecords({ records: paged, total: records.length, page, pages, subdomains: allFactors.subdomains });
   } catch(e) {
     document.getElementById('rec-content').innerHTML = `<div class="loading" style="color:var(--fail)">
       <div style="font-size:15px;font-weight:700;margin-bottom:8px">データの読み込みに失敗しました</div>
@@ -496,28 +502,29 @@ function renderRecords(data) {
       <option value="" ${!s.domain?'selected':''}>All Domains</option>
       ${Object.entries(DOMAIN_JA).map(([k,v])=>`<option value="${k}" ${s.domain===k?'selected':''}>${v}</option>`).join('')}
     </select>
-    <input type="search" placeholder="名前・定義で検索..." value="${s.q}" oninput="clearTimeout(window._st);window._st=setTimeout(()=>{recState.q=this.value;recState.page=1;loadRecords()},300)">
+    <input type="search" placeholder="名前・定義で検索..." value="${esc(s.q)}" oninput="clearTimeout(window._st);window._st=setTimeout(()=>{recState.q=this.value;recState.page=1;loadRecords()},300)">
     <span class="result-count">${data.total}件</span>
   </div>`;
 
+  const asort = col => s.sort===col ? (s.order==='asc'?'ascending':'descending') : 'none';
   h += `<table class="records-table"><thead><tr>
-    <th onclick="toggleSort('name_ja')">名前${arrow('name_ja')}</th>
-    <th onclick="toggleSort('layer')">Layer${arrow('layer')}</th>
-    <th onclick="toggleSort('domain')">Domain${arrow('domain')}</th>
+    <th onclick="toggleSort('name_ja')" aria-sort="${asort('name_ja')}">名前${arrow('name_ja')}</th>
+    <th onclick="toggleSort('layer')" aria-sort="${asort('layer')}">Layer${arrow('layer')}</th>
+    <th onclick="toggleSort('domain')" aria-sort="${asort('domain')}">Domain${arrow('domain')}</th>
     <th>Key Statistic</th>
-    <th onclick="toggleSort('modifiability')">Modif.${arrow('modifiability')}</th>
-    <th onclick="toggleSort('evidence_strength')">Evidence${arrow('evidence_strength')}</th>
+    <th onclick="toggleSort('modifiability')" aria-sort="${asort('modifiability')}">修正可能性${arrow('modifiability')}</th>
+    <th onclick="toggleSort('evidence_strength')" aria-sort="${asort('evidence_strength')}">エビデンス${arrow('evidence_strength')}</th>
   </tr></thead><tbody>`;
 
   for (const r of data.records) {
     const lcls = r.layer==='macro'?'tag-macro':r.layer==='meso'?'tag-meso':'tag-micro';
-    h += `<tr onclick="openFactor('${r.id}')">
-      <td style="font-weight:600">${r.name_ja||''}<br><span style="font-size:10px;color:var(--muted-fg)">${r.name_en||''}</span></td>
-      <td><span class="tag-layer ${lcls}">${r.layer}</span></td>
-      <td><span class="tag-domain">${DOMAIN_JA[r.domain]||r.domain}</span></td>
-      <td style="font-size:11px;color:var(--accent);max-width:200px">${r.key_statistic||''}</td>
-      <td style="font-size:11px">${r.modifiability||''}</td>
-      <td style="font-size:11px">${r.evidence_strength||''}</td>
+    h += `<tr onclick="openFactor('${esc(r.id)}')">
+      <td style="font-weight:600">${esc(r.name_ja)}<br><span style="font-size:10px;color:var(--muted-fg)">${esc(r.name_en)}</span></td>
+      <td><span class="tag-layer ${lcls}">${esc(r.layer)}</span></td>
+      <td><span class="tag-domain">${DOMAIN_JA[r.domain]||esc(r.domain)}</span></td>
+      <td style="font-size:11px;color:var(--accent);max-width:200px">${esc(r.key_statistic)}</td>
+      <td style="font-size:11px">${esc(r.modifiability)}</td>
+      <td style="font-size:11px">${esc(r.evidence_strength)}</td>
     </tr>`;
   }
   h += '</tbody></table>';
@@ -569,17 +576,17 @@ function renderFactorModal(data) {
   const lcls = f.layer==='macro'?'tag-macro':f.layer==='meso'?'tag-meso':'tag-micro';
 
   let h = `<div class="modal-header"><div>
-    <h2>${f.name_ja||''}</h2><div class="m-en">${f.name_en||''}</div>
+    <h2>${esc(f.name_ja)}</h2><div class="m-en">${esc(f.name_en)}</div>
   </div><button class="modal-close" onclick="closeModal()" aria-label="閉じる">x</button></div>
   <div class="modal-body">
-    <div style="margin-bottom:12px"><span class="tag-layer ${lcls}">${f.layer}</span> <span class="tag-domain">${DOMAIN_JA[f.domain]||f.domain}</span></div>
-    ${f.definition?`<div class="modal-def">${f.definition}</div>`:''}
-    ${f.key_statistic?`<div class="modal-stat"><div class="modal-stat-label">Key Statistic</div><div class="modal-stat-value">${f.key_statistic}</div>${f.key_statistic_source?`<div style="font-size:10px;color:var(--muted-fg);margin-top:2px">${f.key_statistic_source}</div>`:''}</div>`:''}
+    <div style="margin-bottom:12px"><span class="tag-layer ${lcls}">${esc(f.layer)}</span> <span class="tag-domain">${DOMAIN_JA[f.domain]||esc(f.domain)}</span></div>
+    ${f.definition?`<div class="modal-def">${esc(f.definition)}</div>`:''}
+    ${f.key_statistic?`<div class="modal-stat"><div class="modal-stat-label">Key Statistic</div><div class="modal-stat-value">${esc(f.key_statistic)}</div>${f.key_statistic_source?`<div style="font-size:10px;color:var(--muted-fg);margin-top:2px">${esc(f.key_statistic_source)}</div>`:''}</div>`:''}
     <div class="modal-section" style="margin-top:16px">
       <div class="modal-meta-row">
-        <div><div class="modal-meta-label">Modifiability</div><div class="modal-meta-value">${f.modifiability||'--'}</div></div>
-        <div><div class="modal-meta-label">Time Scale</div><div class="modal-meta-value">${f.time_scale||'--'}</div></div>
-        <div><div class="modal-meta-label">Evidence</div><div class="modal-meta-value">${f.evidence_strength||'--'}</div></div>
+        <div><div class="modal-meta-label">修正可能性</div><div class="modal-meta-value">${esc(f.modifiability)||'--'}</div></div>
+        <div><div class="modal-meta-label">時間尺度</div><div class="modal-meta-value">${esc(f.time_scale)||'--'}</div></div>
+        <div><div class="modal-meta-label">エビデンス</div><div class="modal-meta-value">${esc(f.evidence_strength)||'--'}</div></div>
       </div>
     </div>`;
 
@@ -591,12 +598,12 @@ function renderFactorModal(data) {
       const otherId = isSource ? r.target_factor_id : r.source_factor_id;
       const arrow = isSource ? '→' : '←';
       const rcls = (r.relation_type==='protective'||r.direction==='positive') ? 'rel-protective' : (r.relation_type==='risk'||r.direction==='negative') ? 'rel-risk' : 'rel-other';
-      const effect = r.effect_size_value ? ` ${r.effect_size_type}=${r.effect_size_value}` : '';
-      h += `<div class="modal-rel-item" onclick="openFactor('${otherId}')">
-        <span class="rel-tag ${rcls}">${r.relation_type}</span>
-        ${f.name_ja} <span class="modal-arrow">${arrow}</span> ${other}
+      const effect = r.effect_size_value ? ` ${esc(r.effect_size_type)}=${r.effect_size_value}` : '';
+      h += `<div class="modal-rel-item" onclick="openFactor('${esc(otherId)}')">
+        <span class="rel-tag ${rcls}">${esc(r.relation_type)}</span>
+        ${esc(f.name_ja)} <span class="modal-arrow">${arrow}</span> ${esc(other)}
         ${effect?`<span class="modal-effect">${effect}</span>`:''}
-        ${r.evidence_source?`<br><span style="font-size:10px;color:var(--muted-fg)">${r.evidence_source}</span>`:''}
+        ${r.evidence_source?`<br><span style="font-size:10px;color:var(--muted-fg)">${esc(r.evidence_source)}</span>`:''}
       </div>`;
     }
     h += '</div>';
@@ -605,8 +612,8 @@ function renderFactorModal(data) {
   if (data.interventions.length) {
     h += '<div class="modal-section"><div class="modal-section-title">Interventions</div>';
     for (const i of data.interventions) {
-      h += `<div class="modal-rel-item"><strong>${i.name_ja}</strong> <span style="font-size:10px;color:var(--muted-fg)">${i.name_en||''}</span>
-        ${i.effect_size_description?`<br><span style="color:var(--accent);font-size:12px">${i.effect_size_description}</span>`:''}
+      h += `<div class="modal-rel-item"><strong>${esc(i.name_ja)}</strong> <span style="font-size:10px;color:var(--muted-fg)">${esc(i.name_en)}</span>
+        ${i.effect_size_description?`<br><span style="color:var(--accent);font-size:12px">${esc(i.effect_size_description)}</span>`:''}
       </div>`;
     }
     h += '</div>';
@@ -616,7 +623,7 @@ function renderFactorModal(data) {
     h += '<div class="modal-section"><div class="modal-section-title">Academic DB Links</div>';
     for (const l of data.academic_links) {
       h += `<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--muted)">
-        <span style="color:var(--accent);font-weight:600">${l.link_type}</span> → ${l.academic_table} / ${l.description||l.academic_id}
+        <span style="color:var(--accent);font-weight:600">${esc(l.link_type)}</span> → ${esc(l.academic_table)} / ${esc(l.description||l.academic_id)}
       </div>`;
     }
     h += '</div>';
