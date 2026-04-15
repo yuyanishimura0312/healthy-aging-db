@@ -5,7 +5,7 @@ import json
 import os
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'healthy_aging.db')
-OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'monitor')
+OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'docs')
 
 def dict_factory(cursor, row):
     return {col[0]: row[idx] for idx, col in enumerate(cursor.description)}

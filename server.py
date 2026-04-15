@@ -7,7 +7,7 @@ import os
 import urllib.parse
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'healthy_aging.db')
-STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'monitor')
+STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'docs')
 PORT = 5202
 
 def dict_factory(cursor, row):
