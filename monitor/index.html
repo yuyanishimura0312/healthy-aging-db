@@ -200,7 +200,7 @@ main { padding: 20px 32px; max-width: 1400px; margin: 0 auto; }
       <button class="view-btn active" id="vb-dash" onclick="switchView('dashboard')">Dashboard</button>
       <button class="view-btn" id="vb-rec" onclick="switchView('records')">Records</button>
     </div>
-    <a href="/guide.html" class="refresh-btn" style="text-decoration:none">Guide</a>
+    <a href="guide.html" class="refresh-btn" style="text-decoration:none">Guide</a>
     <button class="refresh-btn" onclick="location.reload()">更新</button>
   </nav>
 </header>
@@ -234,7 +234,7 @@ function switchView(v) {
 // ===== Dashboard =====
 async function loadDashboard() {
   try {
-    const res = await fetch('/api/stats');
+    const res = await fetch('api/stats.json');
     S = await res.json();
     renderDashboard();
     document.getElementById('header-sub').textContent =
@@ -423,14 +423,36 @@ function filterByLayer(layer) {
 }
 
 // ===== Records =====
+let allFactors = null;
 async function loadRecords() {
   const s = recState;
-  const params = new URLSearchParams({ layer:s.layer, domain:s.domain, q:s.q, sort:s.sort, order:s.order, page:s.page });
   document.getElementById('rec-content').innerHTML = '<div class="loading"><span class="loading-spinner"></span>読み込み中...</div>';
   try {
-    const res = await fetch('/api/factors?' + params);
-    const data = await res.json();
-    renderRecords(data);
+    if (!allFactors) {
+      const res = await fetch('api/factors.json');
+      allFactors = await res.json();
+    }
+    // Client-side filtering
+    let records = allFactors.records.slice();
+    if (s.layer) records = records.filter(r => r.layer === s.layer);
+    if (s.domain) records = records.filter(r => r.domain === s.domain);
+    if (s.q) {
+      const q = s.q.toLowerCase();
+      records = records.filter(r =>
+        (r.name_ja && r.name_ja.toLowerCase().includes(q)) ||
+        (r.name_en && r.name_en.toLowerCase().includes(q)) ||
+        (r.definition && r.definition.toLowerCase().includes(q)) ||
+        (r.keywords_ja && r.keywords_ja.toLowerCase().includes(q))
+      );
+    }
+    // Sort
+    const col = s.sort || 'name_ja';
+    records.sort((a, b) => {
+      const va = (a[col] || '').toString().toLowerCase();
+      const vb = (b[col] || '').toString().toLowerCase();
+      return s.order === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+    });
+    renderRecords({ records, total: records.length, page: 1, pages: 1, subdomains: allFactors.subdomains });
   } catch(e) {
     document.getElementById('rec-content').innerHTML = `<div class="loading" style="color:var(--fail)">エラー: ${e.message}</div>`;
   }
@@ -499,9 +521,12 @@ function toggleSort(col) {
 // ===== Factor Detail Modal =====
 async function openFactor(id) {
   try {
-    const res = await fetch('/api/factor/' + encodeURIComponent(id));
-    const data = await res.json();
-    if (data.error) return;
+    if (!window._factorDetails) {
+      const r = await fetch('api/factor_details.json');
+      window._factorDetails = await r.json();
+    }
+    const data = window._factorDetails[id];
+    if (!data || data.error) return;
     renderFactorModal(data);
   } catch(e) { console.error(e); }
 }
