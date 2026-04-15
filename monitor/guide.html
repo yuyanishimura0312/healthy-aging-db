@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>使い方ガイド - 健康寿命DB モニター</title>
+<link rel="icon" href="https://esse-sense.com/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FDFBF9; --fg: #3D2E22; --border: #E6D5C4;
+  --muted: #F8EDE4; --muted-fg: #6B5445; --subtle: #7A6855;
+  --accent: #A86B50; --accent-d: #8B5840; --card: #FFFFFF;
+  --pass: #5A8A5A; --fail: #C25454; --warn: #B8832A;
+  --macro: #C25454; --meso: #B8832A; --micro: #5A8A5A;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--fg); font-family: 'Noto Sans JP','Hiragino Sans',sans-serif; font-size: 14px; line-height: 1.7; }
+header { background: var(--fg); color: var(--bg); padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+header h1 { font-size: 15px; font-weight: 700; letter-spacing: .05em; cursor: pointer; }
+header .sub { font-size: 10px; color: var(--border); margin-top: 2px; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.view-toggle { display: flex; gap: 2px; background: rgba(255,255,255,.1); border-radius: 6px; padding: 2px; }
+.view-btn { background: none; border: none; color: var(--border); padding: 5px 14px; font-size: 11px; font-family: inherit; cursor: pointer; border-radius: 4px; font-weight: 500; text-decoration: none; display: inline-block; }
+.view-btn.active { background: var(--accent); color: white; }
+.view-btn:hover { color: white; }
+
+main { padding: 20px 32px; max-width: 900px; margin: 0 auto; }
+
+/* Table of contents */
+.toc { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin-bottom: 28px; }
+.toc-title { font-size: 11px; font-weight: 700; letter-spacing: .05em; color: var(--muted-fg); text-transform: uppercase; margin-bottom: 10px; }
+.toc-list { list-style: none; }
+.toc-list li { padding: 4px 0; }
+.toc-list a { font-size: 13px; color: var(--accent); text-decoration: none; font-weight: 500; }
+.toc-list a:hover { text-decoration: underline; color: var(--accent-d); }
+
+/* Section */
+.guide-section { margin-bottom: 40px; }
+.section-title { font-size: 11px; font-weight: 700; letter-spacing: .05em; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+
+/* Step cards */
+.step-cards { display: flex; flex-direction: column; gap: 16px; }
+.step-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; display: flex; gap: 18px; align-items: flex-start; }
+.step-num { flex-shrink: 0; width: 36px; height: 36px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; margin-top: 2px; }
+.step-body {}
+.step-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+.step-text { font-size: 13px; line-height: 1.8; color: var(--fg); }
+
+/* Prose blocks */
+.prose { font-size: 13px; line-height: 1.9; color: var(--fg); }
+.prose h3 { font-size: 14px; font-weight: 700; margin-top: 24px; margin-bottom: 8px; padding-left: 10px; border-left: 3px solid var(--accent); }
+.prose p { margin-bottom: 14px; }
+
+/* Tip cards */
+.tip-cards { display: flex; flex-direction: column; gap: 10px; }
+.tip-card { background: var(--muted); border-radius: 8px; padding: 14px 16px; font-size: 13px; line-height: 1.8; }
+.tip-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; color: var(--fg); }
+.tip-text { color: var(--muted-fg); }
+
+/* CTA */
+.cta-section { text-align: center; padding: 32px 0; }
+.cta-btn { display: inline-block; background: var(--accent); color: white; border: none; border-radius: 8px; padding: 12px 32px; font-size: 14px; font-family: inherit; font-weight: 700; cursor: pointer; text-decoration: none; transition: background .15s; }
+.cta-btn:hover { background: var(--accent-d); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  header { padding: 10px 16px; flex-wrap: wrap; gap: 8px; }
+  main { padding: 12px 16px; }
+  .step-card { flex-direction: column; gap: 10px; }
+}
+
+html { scroll-behavior: smooth; }
+</style>
+</head>
+<body>
+
+<header>
+  <div onclick="location.href='/'" style="cursor:pointer">
+    <h1>健康寿命DB モニター</h1>
+    <div class="sub">使い方ガイド</div>
+  </div>
+  <nav class="header-right">
+    <div class="view-toggle">
+      <a href="/" class="view-btn">Dashboard</a>
+      <a href="/guide.html" class="view-btn active">Guide</a>
+    </div>
+  </nav>
+</header>
+
+<main>
+
+  <!-- Table of Contents -->
+  <nav class="toc">
+    <div class="toc-title">Contents</div>
+    <ul class="toc-list">
+      <li><a href="#basics">1. 基本の流れ</a></li>
+      <li><a href="#details">2. 詳しい使い方</a></li>
+      <li><a href="#tips">3. Tips / コツ</a></li>
+      <li><a href="#background">4. データベースの背景</a></li>
+    </ul>
+  </nav>
+
+  <!-- Section 1: 基本の流れ -->
+  <section class="guide-section" id="basics">
+    <div class="section-title">基本の流れ</div>
+    <div class="step-cards">
+
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Dashboard画面で全体を把握する</div>
+          <div class="step-text">アプリを開くと、最初にDashboard画面が表示されます。画面上部には、データベースに登録されている要因・関係・介入の総数がサマリーカードとして並んでおり、データベースの現在の規模が一目でわかります。その下にはマクロ・メゾ・ミクロの三層それぞれのカバレッジ（網羅率）がバーグラフで表示されており、どの層のデータが充実しているか、あるいはまだ不足しているかをすぐに判断できます。</div>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">要因を探索する</div>
+          <div class="step-text">Records画面に切り替えると、データベースに登録された全要因が一覧表として表示されます。画面上部のフィルターで層（マクロ・メゾ・ミクロ）やドメイン（生物学的・行動的・心理社会的など）を選択したり、検索欄にキーワードを入力して絞り込むことができます。気になる要因が見つかったら、行をクリックするだけで詳細情報が開きます。</div>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">関係と介入を読み解く</div>
+          <div class="step-text">要因をクリックして開く詳細モーダルでは、その要因が他のどの要因と因果関係にあるか、どのような介入プログラムが対応しているか、さらにv3学術知識データベースとどう接続しているかを確認できます。関係の矢印をたどることで、ある要因からどのような因果連鎖が生まれているのかを追跡でき、健康寿命に影響するシステム全体の構造を理解する手がかりになります。</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section 2: 詳しい使い方 -->
+  <section class="guide-section" id="details">
+    <div class="section-title">詳しい使い方</div>
+    <div class="prose">
+
+      <h3>Dashboard画面の見方</h3>
+      <p>サマリーカード: 画面最上部に4枚のカードが横に並んでいます。左から順に「Factors（要因数）」「Relations（関係数）」「Interventions（介入数）」「Academic DB Links（学術DB接続数）」を示しています。Relationsのカードには、括弧内に「with effect size」という数字も表示されます。これは効果量（HR、ORなどの定量的な数値）が記録されている関係の数であり、エビデンスの具体性を測る指標になります。</p>
+
+      <p>カバレッジバー: サマリーカードの下に、マクロ層・メゾ層・ミクロ層の3つのカバレッジカードが並びます。各カードには、推定される要因の総数に対して、現在何件がデータベースに登録済みかが「実数 / 推定総数」の形式で表示され、その比率がパーセンテージとプログレスバーで可視化されます。バーの色は、80%以上が緑、50-79%が黄、50%未満が赤で色分けされています。カバレッジカードをクリックすると、その層でRecords画面をフィルタリングして一覧を確認できます。</p>
+
+      <p>ドメイン分布とエビデンスレベル: Dashboard中段には2列のパネルが配置されています。左側の「Domain Distribution」パネルは、6つのドメインごとの要因数を棒グラフで表示します。右側の「Evidence Level Distribution」パネルは、関係データに記録されたエビデンスレベルの分布を示しています。</p>
+
+      <p>Most Connected Factors: 接続数が多い要因のトップ10が一覧で表示されます。接続数が多い要因は、健康寿命のシステムにおける「ハブ」であり、介入のレバレッジポイントになりうる要因です。クリックすると詳細モーダルが開きます。</p>
+
+      <p>フィードバックループと転換点: 「Feedback Loops」パネルには正（好循環）と負（悪循環）のフィードバックループが一覧されます。隣の「Critical Transition Points」パネルは、健康寿命の軌跡における重大な転換点を示します。</p>
+
+      <p>カラム充填率: factorsテーブルの各カラムが、全要因のうち何パーセント埋まっているかをバーグラフで表示します。充填率が低いカラムは、今後のデータ収集で優先的に埋めるべき領域です。</p>
+
+      <p>Survey Frameツリー: 調査対象の全体構造をツリー形式で表示します。各ノードをクリックすると下位レベルが展開されます。</p>
+
+      <h3>Records画面の使い方</h3>
+      <p>画面上部のヘッダーにある「Records」ボタンをクリックすると切り替わります。テーブル上部に層とドメインのドロップダウンフィルター、検索欄が並びます。両フィルターは同時に使えます。検索は入力後300ミリ秒で自動実行されます。列ヘッダーをクリックすると並べ替え可能で、三角マークでソート方向が表示されます。</p>
+
+      <h3>詳細モーダル</h3>
+      <p>要因をクリックすると詳細モーダルが開きます。上部に要因名・層・ドメインのラベル・定義文が表示されます。Key Statisticには代表的な統計量とその出典が表示されます。Relationsセクションでは、HRはハザード比（1未満なら保護的）、ORはオッズ比（1超でリスク増大）を意味します。関係をクリックすると相手側の要因に移動できます。Interventionsセクションには対応する介入プログラムが表示されます。モーダルはxボタン、外側クリック、Escキーで閉じられます。</p>
+
+    </div>
+  </section>
+
+  <!-- Section 3: Tips -->
+  <section class="guide-section" id="tips">
+    <div class="section-title">Tips / コツ</div>
+    <div class="tip-cards">
+
+      <div class="tip-card">
+        <div class="tip-title">1. 接続数の多い要因から見始める</div>
+        <div class="tip-text">Dashboardの「Most Connected Factors」パネルに表示される上位10要因は、健康寿命のシステムにおいて最も多くの因果関係に関与する「ハブ」です。</div>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-title">2. フィードバックループを意識して因果連鎖をたどる</div>
+        <div class="tip-text">詳細モーダルで関係をクリックすると次の要因に移動し、因果連鎖を追跡できます。Dashboardの「Feedback Loops」パネルの循環構造を意識すると介入ポイントが見えてきます。</div>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-title">3. カバレッジと充填率でデータの質を判断する</div>
+        <div class="tip-text">カバレッジはデータベースの「広さ」、カラム充填率はデータの「深さ」を示します。この2つを組み合わせて次のデータ収集の優先順位を判断してください。</div>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-title">4. ネットワーク可視化ツールと併用する</div>
+        <div class="tip-text">同じデータベースのネットワーク可視化ツール（ポート5201）を別タブで開くと、要因が因果ネットワーク全体のどこに位置するかを視覚的に確認できます。</div>
+      </div>
+
+      <div class="tip-card">
+        <div class="tip-title">5. 修正可能性でソートして介入の優先順位をつける</div>
+        <div class="tip-text">Records画面で「Modif.」列をソートすると、修正可能性の高い順に要因を並べ替えられます。</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section 4: データベースの背景 -->
+  <section class="guide-section" id="background">
+    <div class="section-title">データベースの背景</div>
+    <div class="prose">
+
+      <h3>このデータベースが扱うもの</h3>
+      <p>健康寿命延伸要因データベースは、人が健康に長く暮らし続けるために何が重要か、という問いに対する科学的知見を体系的に構造化したデータベースです。要因（Factor）・関係（Relation）・介入（Intervention）という3つの構成要素で整理しています。</p>
+
+      <h3>三層モデル</h3>
+      <p>マクロ層は教育政策・所得格差・医療制度など社会の構造的要因。メゾ層はウォーカビリティ・社会関係資本・通いの場など地域レベルの要因。ミクロ層はテロメア長・身体活動・生きがいなど個人レベルの要因。</p>
+
+      <h3>v3学術知識DBとの接続</h3>
+      <p>Academic DB Linksテーブルを通じてv3学術知識データベースとリンクしています。各要因や関係がどのような理論的裏づけを持つかを確認できます。</p>
+
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <a href="/" class="cta-btn">Dashboard画面へ</a>
+  </section>
+
+</main>
+
+</body>
+</html>
